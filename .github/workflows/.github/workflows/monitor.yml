@@ -1,0 +1,17 @@
+name: GoRest Production Monitor
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # Tự động kích hoạt mỗi giờ một lần
+  workflow_dispatch:      # Cho phép bấm nút kích hoạt chạy bằng tay
+
+jobs:
+  monitor-api:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kiểm tra độ trễ API GET /users (< 800ms)
+        run: |
+          RESPONSE_TIME=$(curl -s -w "%{time_total}\n" -o /dev/null "https://gorest.co.in/public/v2/users")
+          echo "Thời gian phản hồi thực tế: ${RESPONSE_TIME}s"
+          # 800ms = 0.8 giây
+          awk -v t="$RESPONSE_TIME" 'BEGIN {if (t < 0.8) exit 0; else {print "Thời gian phản hồi vượt quá 800ms!"; exit 1}}'
